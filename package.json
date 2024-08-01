@@ -1,0 +1,43 @@
+{
+  "name": "mobx-document",
+  "version": "0.0.1",
+  "description": "MobX-based self fetching document",
+  "private": true,
+  "author": "Joost Lubach <joostlubach@gmail.com>",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "build": "pnpm clean && pnpm build:tsc",
+    "build:tsc": "pnpm build:tsc:esm && pnpm build:tsc:cjs",
+    "build:tsc:esm": "tsc -p tsconfig.prod.json --module esnext --outDir dist/esm --declarationDir dist/types",
+    "build:tsc:cjs": "tsc -p tsconfig.prod.json --module commonjs --outDir dist/cjs --declaration false --declarationMap false",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext .ts",
+    "check": "tsc -p . --noEmit",
+    "test": "NODE_ENV=test jest"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "logger": "workspace:^",
+    "mobx": "^6.12.3",
+    "ytil": "workspace:^"
+  },
+  "peerDependencies": {
+    "mobx": "^6.10.2"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.0",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^5.0.5",
+    "tsc-alias": "^1.8.8",
+    "typescript": "5.4.3"
+  }
+}
