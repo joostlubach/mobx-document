@@ -1,5 +1,4 @@
 import { isPlainObject, Primitive, UnknownObject } from 'ytil'
-
 import Document from './Document'
 import Endpoint from './Endpoint'
 
@@ -17,14 +16,15 @@ export interface DatabaseOptions<D extends AnyDocument> {
 
 export type AnyEndpoint = Endpoint<AnyDocument, any, any>
 
-export interface EndpointOptions<D extends AnyDocument, M = unknown> {
-  initialData?: Array<DocumentData<D>>
-  initialMeta?: M | null
+export interface EndpointOptions<P, D extends AnyDocument, M = unknown> {
+  defaultParams?: P
+  initialParams?: P
+  data?:          Array<DocumentData<D>>
+  meta?:          M | null
 }
 
-export interface CollectionFetchOptions<P extends object> {
-  extraParams?: P
-  append?:      boolean
+export interface CollectionFetchOptions {
+  append?: boolean
 }
 
 export interface AppendOptions {

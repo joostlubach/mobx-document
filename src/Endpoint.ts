@@ -2,7 +2,6 @@ import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable } from 'mobx'
 import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
-
 import Database from './Database'
 import { Fetch } from './Fetch'
 import {
@@ -23,28 +22,30 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
 
   constructor(
     public readonly database: Database<D>,
-    defaultParams: P,
-    private readonly options: EndpointOptions<D, M> = {},
+    ...args: {} extends P ? [options?: EndpointOptions<P, D, M>] : [options: EndpointOptions<P, D, M> & {initialParams: P}]
   ) {
-    this.defaultParams = {...defaultParams}
-    this.params = {...defaultParams}
+    this.options = args[0] ?? {}
 
-    if (options.initialMeta != null) {
-      this.meta = options.initialMeta
+    this.defaultParams = {...this.options.defaultParams as P}
+    this.params = {...this.options.initialParams as P}
+
+    if (this.options.meta != null) {
+      this.meta = this.options.meta
     }
 
     makeObservable(this)
 
-    if (options.initialData != null) {
-      this.replace(options.initialData)
+    if (this.options.data != null) {
+      this.replace(this.options.data)
       this.fetchStatus = 'done'
     }
   }
 
-  private readonly defaultParams: P
+  protected options:       EndpointOptions<P, D, M>
+  protected defaultParams: P
 
   @observable.ref
-  protected params: P = {} as P
+  protected params: P
 
   public param<K extends keyof P>(name: K): P[K] {
     return this.params[name]
@@ -70,7 +71,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
   }
 
   @action
-  public async fetchWithParams(params: Partial<P>, options: CollectionFetchOptions<P> = {}) {
+  public async fetchWithParams(params: Partial<P>, options: CollectionFetchOptions = {}) {
     this.params = {
       ...this.params,
       ...params,
@@ -81,7 +82,10 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
 
   @action
   public resetAndFetch(params?: Partial<P>) {
-    this.params = {...this.defaultParams, ...params}
+    this.params = {
+      ...this.defaultParams,
+      ...params,
+    }
     this.fetch()
   }
 
@@ -135,13 +139,13 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
   }
 
   @action
-  public async fetchIfNeeded(options: CollectionFetchOptions<P> = {}): Promise<void> {
+  public async fetchIfNeeded(options: CollectionFetchOptions = {}): Promise<void> {
     if (this.fetchStatus === 'done') { return }
     await this.fetch(options)
   }
 
   @action
-  public fetch(options: CollectionFetchOptions<P> = {}): Promise<void> {
+  public fetch(options: CollectionFetchOptions = {}): Promise<void> {
     const {params, lastFetchParams} = this
 
     if (this.lastFetchPromise != null && lastFetchParams != null && objectEquals(params, lastFetchParams)) {
@@ -151,7 +155,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
     this.fetchStatus = 'fetching'
 
     const promise: Promise<void> = this
-      .performFetch({...params, ...options.extraParams}, options)
+      .performFetch(params, options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response, options),
@@ -163,9 +167,9 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
     return promise
   }
 
-  protected abstract performFetch(params: P, options: CollectionFetchOptions<P>): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
+  protected abstract performFetch(params: P, options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
 
-  private onFetchSuccess = action((promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions<P>) => {
+  private onFetchSuccess = action((promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
     if (promise !== this.lastFetchPromise) { return }
 
     this.lastFetchPromise = null
@@ -175,7 +179,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
 
     if (isErrorResponse(response)) {
       this.fetchStatus = response.error
-      this.meta = this.options.initialMeta ?? null
+      this.meta = this.options.meta ?? null
     } else if (options.append) {
       this.fetchStatus = 'done'
       this.append(response.data, response.meta)
@@ -185,15 +189,15 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
     }
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private onFetchError = action((promise: Promise<unknown>, error: Error, options: CollectionFetchOptions<P>) => {
+  @action
+  private onFetchError = (promise: Promise<unknown>, error: Error, options: CollectionFetchOptions) => {
     if (promise !== this.lastFetchPromise) { return }
 
     this.lastFetchPromise = null
     this.lastFetchParams = null
     this.fetchStatus = error
     logger.error(`Error while fetching collection: ${error.message}`, error)
-  })
+  }
 
   // ------
   // Updates
@@ -283,7 +287,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
   @action
   public clear() {
     this.ids = []
-    this.meta = this.options.initialMeta ?? null
+    this.meta = this.options.meta ?? null
     this.fetchStatus = 'idle'
   }
 
