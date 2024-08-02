@@ -1,7 +1,6 @@
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject, Primitive } from 'ytil'
-
+import { EmptyObject } from 'ytil'
 import {
   DocumentFetchResponse,
   DocumentOptions,
@@ -13,7 +12,12 @@ import {
 
 const logger = new Logger('mobx-document')
 
-export default abstract class Document<T, ID extends Primitive = string, P extends object = EmptyObject, M extends object = EmptyObject> {
+export default abstract class Document<
+  T,
+  ID = string,
+  P = EmptyObject,
+  M = EmptyObject
+> {
 
   constructor(
     public readonly id: ID,

@@ -1,4 +1,4 @@
-import { isPlainObject, Primitive, UnknownObject } from 'ytil'
+import { isPlainObject, UnknownObject } from 'ytil'
 import Document from './Document'
 import Endpoint from './Endpoint'
 
@@ -64,14 +64,11 @@ export interface DocumentOptions<T, M> {
 }
 
 export type DocumentData<D extends Document<any, any, any, any>> =
-  D extends Document<infer T, Primitive, any, any> ? T : unknown
+  D extends Document<infer T, any, any, any> ? T : never
 
 export interface FetchOptions {
   force?: boolean
 }
-
-type D1 = Document<{a: 1}, string, {p1: string}, {m1: number}>
-type D2 = DocumentData<D1>
 
 // ------
 // Optimistic updates

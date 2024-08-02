@@ -18,7 +18,11 @@ import {
 
 const logger = new Logger('mobx-document')
 
-export default abstract class Endpoint<D extends AnyDocument, P extends object = EmptyObject<string>, M extends object = EmptyObject<string>> {
+export default abstract class Endpoint<
+  D extends AnyDocument,
+  P extends object = EmptyObject<string>,
+  M extends object = EmptyObject<string>
+> {
 
   constructor(
     public readonly database: Database<D>,
