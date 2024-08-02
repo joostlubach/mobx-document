@@ -158,7 +158,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
       .performFetch(params, options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
-        response => this.onFetchError(promise, response, options),
+        response => this.onFetchError(promise, response),
       )
 
     this.lastFetchParams = {...params}
@@ -190,7 +190,7 @@ export default abstract class Endpoint<D extends AnyDocument, P extends object =
   })
 
   @action
-  private onFetchError = (promise: Promise<unknown>, error: Error, options: CollectionFetchOptions) => {
+  private onFetchError = (promise: Promise<unknown>, error: Error) => {
     if (promise !== this.lastFetchPromise) { return }
 
     this.lastFetchPromise = null
