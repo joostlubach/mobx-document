@@ -166,7 +166,7 @@ export default abstract class Endpoint<
     this.fetchStatus = 'fetching'
 
     const promise: Promise<void> = this
-      .performFetch(params, options)
+      .performFetch({...this.defaultParams, ...params}, options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response),
