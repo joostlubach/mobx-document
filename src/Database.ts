@@ -1,6 +1,5 @@
 import { action, computed, makeObservable, observable } from 'mobx'
 import { sparse } from 'ytil'
-
 import { AnyDocument, DatabaseOptions, DocumentData } from './types'
 
 export default class Database<D extends AnyDocument> {
@@ -70,8 +69,8 @@ export default class Database<D extends AnyDocument> {
   // Updates
 
   @action
-  public store(item: DocumentData<D>): D {
-    const id = this.options.getID(item)
+  public store(item: DocumentData<D>, id?: D['id']): D {
+    id ??= this.options.getID(item)
     const document = this.document(id, false) ?? this.options.getDocument(item)
     this.documents.set(id, document)
     document.set(item)

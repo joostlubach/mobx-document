@@ -57,19 +57,26 @@ export default abstract class Endpoint<
 
   @action
   public setParams(params: Partial<P>, options: SetParamsOptions<P> = {}) {
+    const {
+      clear = false,
+      fetch = 'refetch',
+      force = false,
+    } = options
+
     const paramsBefore = this.params
     this.params = {
       ...this.params,
       ...params,
     }
 
-    if (!options.force && objectEquals(paramsBefore, this.params)) { return }
+    const firstFetch = this.fetchStatus === 'idle'
+    if (!force && !firstFetch && objectEquals(paramsBefore, this.params)) {
+      return
+    }
 
-    const {clear = false} = options
     const shouldClear = isFunction(clear) ? clear(paramsBefore, this.params) : clear
     if (shouldClear) { this.clear() }
-
-    const {fetch = 'refetch'} = options
+    
     const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus === 'done')
     if (shouldFetch) { this.fetch() }
   }
