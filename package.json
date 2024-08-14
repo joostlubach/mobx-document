@@ -9,11 +9,6 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "pnpm clean && pnpm build:tsc",
-    "build:tsc": "pnpm build:tsc:esm && pnpm build:tsc:cjs",
-    "build:tsc:esm": "tsc -p tsconfig.prod.json --module esnext --outDir dist/esm --declarationDir dist/types",
-    "build:tsc:cjs": "tsc -p tsconfig.prod.json --module commonjs --outDir dist/cjs --declaration false --declarationMap false",
-    "clean": "rimraf dist",
     "lint": "eslint src --ext .ts",
     "check": "tsc -p . --noEmit",
     "test": "NODE_ENV=test jest"
@@ -29,9 +24,6 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.0",
-    "copyfiles": "^2.4.1",
-    "rimraf": "^5.0.5",
-    "tsc-alias": "^1.8.8",
     "typescript": "5.4.3"
   }
 }
