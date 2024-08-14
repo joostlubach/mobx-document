@@ -148,7 +148,6 @@ export default abstract class Endpoint<
   @action
   public fetch(options: CollectionFetchOptions = {}): Promise<void> {
     const {params, lastFetchParams} = this
-
     if (this.lastFetchPromise != null && lastFetchParams != null && objectEquals(params, lastFetchParams)) {
       return this.lastFetchPromise
     }
@@ -156,7 +155,7 @@ export default abstract class Endpoint<
     this.fetchStatus = 'fetching'
 
     const promise: Promise<void> = this
-      .performFetch({...this.defaultParams, ...params}, options)
+      .performFetch(this.mergedParams, options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response),
@@ -166,6 +165,13 @@ export default abstract class Endpoint<
     this.lastFetchPromise = promise
 
     return promise
+  }
+
+  protected get mergedParams() {
+    return {
+      ...this.defaultParams,
+      ...this.params
+    }
   }
 
   protected abstract performFetch(params: P, options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
