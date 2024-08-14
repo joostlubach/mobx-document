@@ -1,6 +1,6 @@
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject } from 'ytil'
+import { EmptyObject, objectEquals } from 'ytil'
 import {
   DocumentFetchResponse,
   DocumentOptions,
@@ -8,6 +8,7 @@ import {
   FetchStatus,
   isErrorResponse,
   OptimisticUpdateSpec,
+  SetParamsOptions,
 } from './types'
 
 const logger = new Logger('mobx-document')
@@ -15,15 +16,18 @@ const logger = new Logger('mobx-document')
 export default abstract class Document<
   T,
   ID = string,
-  P = EmptyObject,
-  M = EmptyObject
+  P extends object = EmptyObject,
+  M extends object = EmptyObject
 > {
 
   constructor(
     public readonly id: ID,
-    options: DocumentOptions<T, M> = {},
+    protected readonly options: DocumentOptions<T, M, P> = {},
   ) {
     makeObservable(this)
+
+    this.defaultParams = {...this.options.defaultParams as P}
+    this.params = {...this.options.initialParams as P}
 
     if (options.initialData != null) {
       this.set(options.initialData, options.initialMeta)
@@ -35,6 +39,11 @@ export default abstract class Document<
 
   @observable.ref
   public meta: M | null = null
+
+  protected defaultParams: P
+
+  @observable.ref
+  protected params: P
 
   @computed
   public get empty() {
@@ -93,10 +102,34 @@ export default abstract class Document<
 
   protected onDidChange() { /**/ }
 
+  // #region Params
+
+  @action
+  public setParams(params: Partial<P>, options: SetParamsOptions<P> = {}) {
+    const {
+      fetch = 'refetch',
+      force = false,
+    } = options
+
+    const paramsBefore = this.params
+    this.params = {
+      ...this.params,
+      ...params,
+    }
+
+    const firstFetch = this.fetchStatus === 'idle'
+    if (!force && !firstFetch && objectEquals(paramsBefore, this.params)) {
+      return
+    }
+
+    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus === 'done')
+    if (shouldFetch) { this.fetch() }
+  }
+
+  // #endregion
+
   // ------
   // Fetch
-
-  public readonly defaultParams: P | null = null
 
   public fetchStatus: FetchStatus = 'idle'
 
@@ -108,19 +141,14 @@ export default abstract class Document<
     }
   }
 
-  public fetch(params?: P, options: FetchOptions = {}): Promise<void> {
+  public fetch(options: FetchOptions = {}): Promise<void> {
     if (!options.force && this.fetchPromise != null) {
       return this.fetchPromise.then(() => undefined)
     }
 
-    if (this.defaultParams == null && params == null) {
-      throw new Error("Cannot fetch document without params")
-    }
-
     this.fetchStatus = 'fetching'
 
-    const coercedParams = this.coerceParams(params)
-    const promise = this.performFetch(coercedParams)
+    const promise = this.performFetch()
     this.fetchPromise = promise
 
     return promise.then(
@@ -129,17 +157,14 @@ export default abstract class Document<
     )
   }
 
-  private coerceParams(params: P | undefined): P {
-    if (params != null) {
-      return params
-    } else if (this.defaultParams != null) {
-      return this.defaultParams
-    } else {
-      throw new Error("Cannot fetch document without params")
+  protected get mergedParams(): P {
+    return {
+      ...this.defaultParams,
+      ...this.params,
     }
   }
 
-  protected abstract performFetch(params: P): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
+  protected abstract performFetch(): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
 
   private onFetchSuccess = action((promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
     if (promise !== this.fetchPromise) { return }

@@ -58,9 +58,12 @@ export interface SetParamsOptions<P> {
 
 export type AnyDocument = Document<any, any, any, any>
 
-export interface DocumentOptions<T, M> {
+export interface DocumentOptions<T, M, P> {
   initialData?: T | null
   initialMeta?: M | null
+
+  defaultParams?: P
+  initialParams?: P
 }
 
 export type DocumentData<D extends Document<any, any, any, any>> =

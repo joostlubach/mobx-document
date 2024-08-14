@@ -82,17 +82,7 @@ export default abstract class Endpoint<
   }
 
   @action
-  public async fetchWithParams(params: Partial<P>, options: CollectionFetchOptions = {}) {
-    this.params = {
-      ...this.params,
-      ...params,
-    }
-
-    await this.fetch(options)
-  }
-
-  @action
-  public resetAndFetch(params?: Partial<P>) {
+  public reset(params?: Partial<P>) {
     this.params = {
       ...this.defaultParams,
       ...params,
