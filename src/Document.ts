@@ -43,7 +43,7 @@ export default abstract class Document<
   protected defaultParams: P
 
   @observable.ref
-  protected params: P
+  public params: P
 
   @computed
   public get empty() {
@@ -157,7 +157,7 @@ export default abstract class Document<
     )
   }
 
-  protected get mergedParams(): P {
+  public get mergedParams(): P {
     return {
       ...this.defaultParams,
       ...this.params,

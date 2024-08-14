@@ -167,10 +167,10 @@ export default abstract class Endpoint<
     return promise
   }
 
-  protected get mergedParams() {
+  public get mergedParams() {
     return {
       ...this.defaultParams,
-      ...this.params
+      ...this.params,
     }
   }
 
@@ -266,14 +266,14 @@ export default abstract class Endpoint<
   }
 
   @action
-  public appendIDs(ids: string[], options: AppendOptions = {}) {
+  public appendIDs(ids: D['id'][], options: AppendOptions = {}) {
     for (const id of ids) {
       this.appendID(id, options)
     }
   }
 
   @action
-  public appendID(id: string, options: AppendOptions = {}) {
+  public appendID(id: D['id'], options: AppendOptions = {}) {
     const {
       ignoreIfExists = true,
     } = options
@@ -283,11 +283,13 @@ export default abstract class Endpoint<
   }
 
   @action
-  public remove(ids: Array<D['id']>) {
+  public remove(ids: Array<D['id']>, deleteFromDB: boolean = true) {
     this.ids = this.ids.filter(id => !ids.includes(id))
 
-    for (const id of ids) {
-      this.database.delete(id)
+    if (deleteFromDB) {
+      for (const id of ids) {
+        this.database.delete(id)
+      }
     }
   }
 
