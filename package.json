@@ -27,11 +27,10 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "logger": "workspace:^",
-    "mobx": "^6.12.3",
     "ytil": "workspace:^"
   },
   "peerDependencies": {
-    "mobx": "^6.10.2"
+    "mobx": ">=6.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.0",
