@@ -2,6 +2,7 @@ import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable } from 'mobx'
 import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
+
 import Database from './Database'
 import { Fetch } from './Fetch'
 import {
@@ -210,7 +211,7 @@ export default abstract class Endpoint<
   // Updates
 
   @action
-  public replace(data: DocumentData<D>[], meta?: M) {
+  public replace(data: Array<DocumentData<D> | {data: DocumentData<D>, meta?: Record<string, any>}>, meta?: M) {
     this.ids = []
     this.append(data, meta)
     this.fetchStatus = 'done'
@@ -228,9 +229,9 @@ export default abstract class Endpoint<
   }
 
   @action
-  public append(data: DocumentData<D>[], meta?: M) {
+  public append(data: Array<DocumentData<D> | {data: DocumentData<D>, meta?: Record<string, any>}>, meta?: M) {
     for (const item of data) {
-      if (isPlainObject(item) && 'data' in item && 'meta' in item) {
+      if (isPlainObject(item) && 'data' in item) {
         this.add(item.data as DocumentData<D>, item.meta as M)
       } else {
         this.add(item)

@@ -1,4 +1,5 @@
 import { isPlainObject, UnknownObject } from 'ytil'
+
 import Document from './Document'
 import Endpoint from './Endpoint'
 
@@ -90,7 +91,7 @@ export type CollectionFetchResponse<T = UnknownObject<string>, M = unknown> = Co
 export type DocumentFetchResponse<T = UnknownObject<string>, M = unknown> = DocumentFetchResponseSuccess<T, M> | FetchResponseError
 
 export interface CollectionFetchResponseSuccess<T, M = unknown> {
-  data:  T[]
+  data:  Array<T | {data: T, meta?: Record<string, any>}>
   meta?: M
 }
 
