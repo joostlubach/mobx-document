@@ -2,7 +2,6 @@ import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable } from 'mobx'
 import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
-
 import Database from './Database'
 import { Fetch } from './Fetch'
 import {
@@ -32,7 +31,10 @@ export default abstract class Endpoint<
     this.options = args[0] ?? {}
 
     this.defaultParams = {...this.options.defaultParams as P}
-    this.params = {...this.options.initialParams as P}
+    this.params = {
+      ...this.defaultParams as P,
+      ...this.options.initialParams as P,
+    }
 
     if (this.options.meta != null) {
       this.meta = this.options.meta
