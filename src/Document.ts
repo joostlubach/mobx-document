@@ -131,6 +131,7 @@ export default abstract class Document<
   // ------
   // Fetch
 
+  @observable
   public fetchStatus: FetchStatus = 'idle'
 
   private fetchPromise: Promise<unknown> | null = null
@@ -166,7 +167,8 @@ export default abstract class Document<
 
   protected abstract performFetch(): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
 
-  private onFetchSuccess = action((promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
+  @action
+  private onFetchSuccess = (promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
     if (promise !== this.fetchPromise) { return }
 
     this.fetchPromise = null
@@ -178,15 +180,16 @@ export default abstract class Document<
     } else {
       this.fetchStatus = response.error
     }
-  })
+  }
 
-  private onFetchError = action((promise: Promise<unknown>, error: Error) => {
+  @action
+  private onFetchError = (promise: Promise<unknown>, error: Error) => {
     if (promise !== this.fetchPromise) { return }
 
     this.fetchPromise = null
     this.fetchStatus = error
     logger.error('Error while fetching document', error)
-  })
+  }
 
   // ------
   // Optimistic updates
