@@ -31,7 +31,7 @@ export default abstract class Endpoint<
     this.options = args[0] ?? {}
 
     this.defaultParams = {...this.options.defaultParams as P}
-    this.params = {
+    this._params = {
       ...this.defaultParams as P,
       ...this.options.initialParams as P,
     }
@@ -52,10 +52,14 @@ export default abstract class Endpoint<
   protected defaultParams: P
 
   @observable.ref
-  protected params: P
+  protected _params: P
+
+  public get params(): P {
+    return this._params
+  }
 
   public param<K extends keyof P>(name: K): P[K] {
-    return this.params[name]
+    return this._params[name]
   }
 
   @action
@@ -66,18 +70,18 @@ export default abstract class Endpoint<
       force = false,
     } = options
 
-    const paramsBefore = this.params
-    this.params = {
-      ...this.params,
+    const paramsBefore = this._params
+    this._params = {
+      ...this._params,
       ...params,
     }
 
     const firstFetch = this.fetchStatus === 'idle'
-    if (!force && !firstFetch && objectEquals(paramsBefore, this.params)) {
+    if (!force && !firstFetch && objectEquals(paramsBefore, this._params)) {
       return
     }
 
-    const shouldClear = isFunction(clear) ? clear(paramsBefore, this.params) : clear
+    const shouldClear = isFunction(clear) ? clear(paramsBefore, this._params) : clear
     if (shouldClear) { this.clear() }
     
     const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus === 'done')
@@ -86,7 +90,7 @@ export default abstract class Endpoint<
 
   @action
   public reset(params?: Partial<P>) {
-    this.params = {
+    this._params = {
       ...this.defaultParams,
       ...params,
     }
@@ -150,7 +154,7 @@ export default abstract class Endpoint<
 
   @action
   public fetch(options: CollectionFetchOptions = {}): Promise<void> {
-    const {params, lastFetchParams} = this
+    const {_params: params, lastFetchParams} = this
     if (this.lastFetchPromise != null && lastFetchParams != null && objectEquals(params, lastFetchParams)) {
       return this.lastFetchPromise
     }
@@ -173,7 +177,7 @@ export default abstract class Endpoint<
   public get mergedParams() {
     return {
       ...this.defaultParams,
-      ...this.params,
+      ...this._params,
     }
   }
 
