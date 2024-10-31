@@ -53,8 +53,7 @@ export default abstract class Endpoint<
 
   @observable.ref
   protected _params: P
-
-  public get params(): P {
+  public get params(): Readonly<P> {
     return this._params
   }
 
@@ -162,7 +161,7 @@ export default abstract class Endpoint<
     this.fetchStatus = 'fetching'
 
     const promise: Promise<void> = this
-      .performFetch(this.mergedParams, options)
+      .performFetch(options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response),
@@ -181,7 +180,7 @@ export default abstract class Endpoint<
     }
   }
 
-  protected abstract performFetch(params: P, options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
+  protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
 
   private onFetchSuccess = action((promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
     if (promise !== this.lastFetchPromise) { return }
