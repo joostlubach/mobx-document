@@ -70,10 +70,7 @@ export default abstract class Endpoint<
     } = options
 
     const paramsBefore = this._params
-    this._params = {
-      ...this._params,
-      ...params,
-    }
+    this._params = {...this._params, ...params}
 
     const firstFetch = this.fetchStatus === 'idle'
     if (!force && !firstFetch && objectEquals(paramsBefore, this._params)) {
