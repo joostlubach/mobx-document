@@ -84,7 +84,7 @@ export default abstract class Endpoint<
     if (shouldFetch) { this.fetch() }
   }
 
-  protected mergeParams(prev: P, update: Partial<P>, context: 'defaults' | 'update'): P {
+  protected mergeParams(prev: P, update: Partial<P>, _context: 'defaults' | 'update'): P {
     return {...prev, ...update}
   }
 
