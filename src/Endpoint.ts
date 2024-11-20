@@ -49,10 +49,10 @@ export default abstract class Endpoint<
   }
 
   protected options:       EndpointOptions<P, D, M>
-  protected defaultParams: P
+  protected defaultParams: Readonly<P>
 
   @observable.ref
-  protected _params: P
+  protected _params: Readonly<P>
   public get params(): Readonly<P> {
     return this._params
   }
@@ -69,28 +69,27 @@ export default abstract class Endpoint<
       force = false,
     } = options
 
-    const paramsBefore = this._params
-    this._params = {...this._params, ...params}
+    const prevParams = this._params
+    this._params = this.mergeParams(this._params, params, 'update')
 
     const firstFetch = this.fetchStatus === 'idle'
-    if (!force && !firstFetch && objectEquals(paramsBefore, this._params)) {
+    if (!force && !firstFetch && this.paramsEquals(prevParams, this._params)) {
       return
     }
 
-    const shouldClear = isFunction(clear) ? clear(paramsBefore, this._params) : clear
+    const shouldClear = isFunction(clear) ? clear(prevParams, this._params) : clear
     if (shouldClear) { this.clear() }
     
-    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus === 'done')
+    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && (this.fetchStatus === 'done' || this.fetchStatus instanceof Error))
     if (shouldFetch) { this.fetch() }
   }
 
-  @action
-  public reset(params?: Partial<P>) {
-    this._params = {
-      ...this.defaultParams,
-      ...params,
-    }
-    this.fetch()
+  protected mergeParams(prev: P, update: Partial<P>, context: 'defaults' | 'update'): P {
+    return {...prev, ...update}
+  }
+
+  protected paramsEquals(params1: P, params2: P) {
+    return objectEquals(params1, params2)
   }
 
   @observable.ref
@@ -171,10 +170,7 @@ export default abstract class Endpoint<
   }
 
   public get mergedParams() {
-    return {
-      ...this.defaultParams,
-      ...this._params,
-    }
+    return this.mergeParams(this.defaultParams, this._params, 'defaults')
   }
 
   protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
