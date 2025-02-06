@@ -1,6 +1,6 @@
 import { isFunction } from 'lodash'
 import Logger from 'logger'
-import { action, computed, makeObservable, observable } from 'mobx'
+import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
 import Database from './Database'
 import { Fetch } from './Fetch'
@@ -44,7 +44,9 @@ export default abstract class Endpoint<
 
     if (this.options.data != null) {
       this.replace(this.options.data)
-      this.fetchStatus = 'done'
+      runInAction(() => {
+        this.fetchStatus = 'done'
+      })
     }
   }
 
@@ -175,7 +177,8 @@ export default abstract class Endpoint<
 
   protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
 
-  private onFetchSuccess = action((promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
+  @action
+  private onFetchSuccess = (promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
     if (promise !== this.lastFetchPromise) { return }
 
     this.lastFetchPromise = null
@@ -193,7 +196,7 @@ export default abstract class Endpoint<
       this.fetchStatus = 'done'
       this.replace(response.data, response.meta)
     }
-  })
+  }
 
   @action
   private onFetchError = (promise: Promise<unknown>, error: Error) => {
