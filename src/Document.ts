@@ -142,6 +142,7 @@ export default abstract class Document<
     }
   }
 
+  @action
   public fetch(options: FetchOptions = {}): Promise<void> {
     if (!options.force && this.fetchPromise != null) {
       return this.fetchPromise.then(() => undefined)
