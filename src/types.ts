@@ -1,5 +1,4 @@
 import { isPlainObject, UnknownObject } from 'ytil'
-
 import Document from './Document'
 import Endpoint from './Endpoint'
 
@@ -108,17 +107,20 @@ function isSuccessResponse<T, M = unknown>(response: CollectionFetchResponse<T, 
 function isSuccessResponse<T, M = unknown>(response: DocumentFetchResponse<T, M>): response is DocumentFetchResponseSuccess<T, M>
 function isSuccessResponse(response: unknown) {
   if (!isPlainObject(response)) { return false }
+  if (!('data' in response)) { return false }
   return response.data != null
 }
 
 function isErrorResponse(response: CollectionFetchResponse<unknown, unknown> | DocumentFetchResponse<unknown, unknown>): response is FetchResponseError {
   if (!isPlainObject(response)) { return false }
-  return response.error != null
+  return 'error' in response && response.error != null
 }
 
 function isNotFoundResponse(response: CollectionFetchResponse<unknown, unknown> | DocumentFetchResponse<unknown, unknown>): response is FetchResponseError {
   if (!isPlainObject(response)) { return false }
+  if (!('error' in response)) { return false }
   if (!isPlainObject(response.error)) { return false }
+  if (!('status' in response.error)) { return false }
 
   return response.error.status === 404
 }
