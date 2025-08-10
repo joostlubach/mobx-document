@@ -85,7 +85,7 @@ export default abstract class Document<
   }
 
   @action
-  public mergeMeta(meta: Partial<M>) {
+  public mergeMeta(meta: Partial<E>) {
     if (this.meta == null) { return }
 
     this.meta = {...this.meta, meta}
@@ -93,7 +93,7 @@ export default abstract class Document<
   }
 
   @action
-  public updateMeta(meta: Partial<M>) {
+  public updateMeta(meta: Partial<E>) {
     if (this.meta == null) { return }
     this.meta = {...this.meta, ...meta}
 
