@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.0",
+    "fs": "^0.0.1-security",
+    "js-yaml": "^4.1.0",
     "typescript": "^5.9.2"
   }
 }
