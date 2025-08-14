@@ -224,7 +224,7 @@ export default abstract class Endpoint<
   }
 
   @action
-  public updateMeta(meta: Partial<E>) {
+  public updateMeta(meta: Partial<M>) {
     if (this.meta == null) { return }
     this.meta = {...this.meta, meta}
   }
