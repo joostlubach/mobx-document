@@ -15,7 +15,7 @@ const logger = new Logger('mobx-document')
 
 export default abstract class Document<
   T,
-  ID = string,
+  ID extends string | number,
   P extends object = EmptyObject,
   M extends object = EmptyObject
 > {
