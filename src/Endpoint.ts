@@ -184,9 +184,9 @@ export default abstract class Endpoint<
     this.lastFetchPromise = null
     this.lastFetchParams = null
 
-    if (response == null) { return }
-
-    if (isErrorResponse(response)) {
+    if (response == null) {
+      this.fetchStatus = 'done'
+    } else if (isErrorResponse(response)) {
       this.fetchStatus = response.error
       this.meta = this.options.meta ?? null
     } else if (options.append) {
@@ -272,6 +272,11 @@ export default abstract class Endpoint<
     for (const id of ids) {
       this.appendID(id, options)
     }
+  }
+
+  @action
+  public replaceIDs(ids: D['id'][]) {
+    this.ids = ids
   }
 
   @action

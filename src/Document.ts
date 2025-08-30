@@ -34,6 +34,8 @@ export default abstract class Document<
     }
   }
 
+  // #region Data
+
   @observable.ref
   public data: T | null = null
 
@@ -102,6 +104,8 @@ export default abstract class Document<
 
   protected onDidChange() { /**/ }
 
+  // #endregion
+
   // #region Params
 
   @action
@@ -128,8 +132,7 @@ export default abstract class Document<
 
   // #endregion
 
-  // ------
-  // Fetch
+  // #region Fetch
 
   @observable
   public fetchStatus: FetchStatus = 'idle'
@@ -192,8 +195,9 @@ export default abstract class Document<
     logger.error('Error while fetching document', error)
   }
 
-  // ------
-  // Optimistic updates
+  // #endregion
+
+  // #region Optimistic updates
 
   @action
   protected async performOptimisticUpdate(spec: OptimisticUpdateSpec<T, M>) {
@@ -216,5 +220,7 @@ export default abstract class Document<
       }
     })
   }
+
+  // #endregion
 
 }
