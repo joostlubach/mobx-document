@@ -98,11 +98,6 @@ export default abstract class Endpoint<
   public ids: Array<D['id']> = []
 
   @computed
-  public get documents() {
-    return this.database.listDocuments(this.ids)
-  }
-
-  @computed
   public get data() {
     return this.database.list(this.ids)
   }
