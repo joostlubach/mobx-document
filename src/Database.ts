@@ -46,15 +46,18 @@ export default class Database<D extends AnyDocument> {
     return sparse([...this.documents.values()].map(doc => doc.data as DocumentData<D> | null))
   }
 
-  public list(ids: D['id'][]): DocumentData<D>[] {
-    const documents = ids
+  public listDocuments(ids: D['id'][]): D[] {
+    return ids
       .map(id => this.documents.get(id))
       .filter(doc => {
         if (doc == null) { return false }
         if (doc.data == null) { return false }
         return true
       }) as D[]
+  }
 
+  public list(ids: D['id'][]): DocumentData<D>[] {
+    const documents = this.listDocuments(ids)
     return documents.map(doc => doc.data as DocumentData<D>)
   }
 
