@@ -15,7 +15,7 @@ const logger = new Logger('mobx-document')
 
 export default abstract class Document<
   T,
-  ID = string,
+  ID extends string | number,
   P extends object = EmptyObject,
   M extends object = EmptyObject
 > {
@@ -33,6 +33,8 @@ export default abstract class Document<
       this.set(options.initialData, options.initialMeta)
     }
   }
+
+  // #region Data
 
   @observable.ref
   public data: T | null = null
@@ -102,6 +104,8 @@ export default abstract class Document<
 
   protected onDidChange() { /**/ }
 
+  // #endregion
+
   // #region Params
 
   @action
@@ -128,9 +132,9 @@ export default abstract class Document<
 
   // #endregion
 
-  // ------
-  // Fetch
+  // #region Fetch
 
+  @observable
   public fetchStatus: FetchStatus = 'idle'
 
   private fetchPromise: Promise<unknown> | null = null
@@ -141,6 +145,7 @@ export default abstract class Document<
     }
   }
 
+  @action
   public fetch(options: FetchOptions = {}): Promise<void> {
     if (!options.force && this.fetchPromise != null) {
       return this.fetchPromise.then(() => undefined)
@@ -166,7 +171,8 @@ export default abstract class Document<
 
   protected abstract performFetch(): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
 
-  private onFetchSuccess = action((promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
+  @action
+  private onFetchSuccess = (promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
     if (promise !== this.fetchPromise) { return }
 
     this.fetchPromise = null
@@ -178,18 +184,20 @@ export default abstract class Document<
     } else {
       this.fetchStatus = response.error
     }
-  })
+  }
 
-  private onFetchError = action((promise: Promise<unknown>, error: Error) => {
+  @action
+  private onFetchError = (promise: Promise<unknown>, error: Error) => {
     if (promise !== this.fetchPromise) { return }
 
     this.fetchPromise = null
     this.fetchStatus = error
     logger.error('Error while fetching document', error)
-  })
+  }
 
-  // ------
-  // Optimistic updates
+  // #endregion
+
+  // #region Optimistic updates
 
   @action
   protected async performOptimisticUpdate(spec: OptimisticUpdateSpec<T, M>) {
@@ -212,5 +220,7 @@ export default abstract class Document<
       }
     })
   }
+
+  // #endregion
 
 }

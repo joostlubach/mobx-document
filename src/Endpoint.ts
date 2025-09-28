@@ -1,8 +1,7 @@
 import { isFunction } from 'lodash'
 import Logger from 'logger'
-import { action, computed, makeObservable, observable } from 'mobx'
+import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
-
 import Database from './Database'
 import { Fetch } from './Fetch'
 import {
@@ -21,8 +20,8 @@ const logger = new Logger('mobx-document')
 
 export default abstract class Endpoint<
   D extends AnyDocument,
-  P extends object = EmptyObject<string>,
-  M extends object = EmptyObject<string>
+  P extends object = EmptyObject,
+  M extends object = EmptyObject
 > {
 
   constructor(
@@ -32,7 +31,10 @@ export default abstract class Endpoint<
     this.options = args[0] ?? {}
 
     this.defaultParams = {...this.options.defaultParams as P}
-    this.params = {...this.options.initialParams as P}
+    this._params = {
+      ...this.defaultParams as P,
+      ...this.options.initialParams as P,
+    }
 
     if (this.options.meta != null) {
       this.meta = this.options.meta
@@ -42,18 +44,23 @@ export default abstract class Endpoint<
 
     if (this.options.data != null) {
       this.replace(this.options.data)
-      this.fetchStatus = 'done'
+      runInAction(() => {
+        this.fetchStatus = 'done'
+      })
     }
   }
 
   protected options:       EndpointOptions<P, D, M>
-  protected defaultParams: P
+  protected defaultParams: Readonly<P>
 
   @observable.ref
-  protected params: P
+  protected _params: Readonly<P>
+  public get params(): Readonly<P> {
+    return this._params
+  }
 
   public param<K extends keyof P>(name: K): P[K] {
-    return this.params[name]
+    return this._params[name]
   }
 
   @action
@@ -64,40 +71,31 @@ export default abstract class Endpoint<
       force = false,
     } = options
 
-    const paramsBefore = this.params
-    this.params = {
-      ...this.params,
-      ...params,
-    }
+    const prevParams = this._params
+    this._params = this.mergeParams(this._params, params, 'update')
 
     const firstFetch = this.fetchStatus === 'idle'
-    if (!force && !firstFetch && objectEquals(paramsBefore, this.params)) {
+    if (!force && !firstFetch && this.paramsEquals(prevParams, this._params)) {
       return
     }
 
-    const shouldClear = isFunction(clear) ? clear(paramsBefore, this.params) : clear
+    const shouldClear = isFunction(clear) ? clear(prevParams, this._params) : clear
     if (shouldClear) { this.clear() }
     
-    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus === 'done')
+    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && (this.fetchStatus === 'done' || this.fetchStatus instanceof Error))
     if (shouldFetch) { this.fetch() }
   }
 
-  @action
-  public reset(params?: Partial<P>) {
-    this.params = {
-      ...this.defaultParams,
-      ...params,
-    }
-    this.fetch()
+  protected mergeParams(prev: P, update: Partial<P>, _context: 'defaults' | 'update'): P {
+    return {...prev, ...update}
+  }
+
+  protected paramsEquals(params1: P, params2: P) {
+    return objectEquals(params1, params2)
   }
 
   @observable.ref
   public ids: Array<D['id']> = []
-
-  @computed
-  public get documents() {
-    return this.database.listDocuments(this.ids)
-  }
 
   @computed
   public get data() {
@@ -148,7 +146,7 @@ export default abstract class Endpoint<
 
   @action
   public fetch(options: CollectionFetchOptions = {}): Promise<void> {
-    const {params, lastFetchParams} = this
+    const {_params: params, lastFetchParams} = this
     if (this.lastFetchPromise != null && lastFetchParams != null && objectEquals(params, lastFetchParams)) {
       return this.lastFetchPromise
     }
@@ -156,7 +154,7 @@ export default abstract class Endpoint<
     this.fetchStatus = 'fetching'
 
     const promise: Promise<void> = this
-      .performFetch(this.mergedParams, options)
+      .performFetch(options)
       .then(
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response),
@@ -169,23 +167,21 @@ export default abstract class Endpoint<
   }
 
   public get mergedParams() {
-    return {
-      ...this.defaultParams,
-      ...this.params,
-    }
+    return this.mergeParams(this.defaultParams, this._params, 'defaults')
   }
 
-  protected abstract performFetch(params: P, options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
+  protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
 
-  private onFetchSuccess = action((promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
+  @action
+  private onFetchSuccess = (promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
     if (promise !== this.lastFetchPromise) { return }
 
     this.lastFetchPromise = null
     this.lastFetchParams = null
 
-    if (response == null) { return }
-
-    if (isErrorResponse(response)) {
+    if (response == null) {
+      this.fetchStatus = 'done'
+    } else if (isErrorResponse(response)) {
       this.fetchStatus = response.error
       this.meta = this.options.meta ?? null
     } else if (options.append) {
@@ -195,7 +191,7 @@ export default abstract class Endpoint<
       this.fetchStatus = 'done'
       this.replace(response.data, response.meta)
     }
-  })
+  }
 
   @action
   private onFetchError = (promise: Promise<unknown>, error: Error) => {
@@ -271,6 +267,11 @@ export default abstract class Endpoint<
     for (const id of ids) {
       this.appendID(id, options)
     }
+  }
+
+  @action
+  public replaceIDs(ids: D['id'][]) {
+    this.ids = ids
   }
 
   @action

@@ -26,12 +26,9 @@ export default class Database<D extends AnyDocument> {
     return this.allDocuments.filter(doc => doc.data != null)
   }
 
-  public document(id: D['id'], create?: true | undefined): D
-  public document(id: D['id'], create: false): D | null
-  public document(id: D['id'], create?: boolean): D | null
-  public document(id: D['id'], create: boolean = true): D | null {
-    const document = this.documents.get(id) ?? null
-    if (!create || document != null) { return document }
+  public document(id: D['id']): D {
+    const existing = this.documents.get(id)
+    if (existing != null) { return existing }
 
     const newDocument = this.options.emptyDocument(id)
     this.documents.set(id, newDocument)
@@ -39,14 +36,10 @@ export default class Database<D extends AnyDocument> {
   }
 
   public get(id: D['id']): DocumentData<D> | null {
-    const document = this.document(id, false)
+    const document = this.document(id)
     if (document == null) { return null }
 
     return document.data as DocumentData<D>
-  }
-
-  public listDocuments(ids: Array<D['id']>, create?: boolean): D[] {
-    return ids.map(id => this.document(id, create)).filter(Boolean) as D[]
   }
 
   public all(): DocumentData<D>[] {
@@ -71,7 +64,7 @@ export default class Database<D extends AnyDocument> {
   @action
   public store(item: DocumentData<D>, id?: D['id']): D {
     id ??= this.options.getID(item)
-    const document = this.document(id, false) ?? this.options.getDocument(item)
+    const document = this.document(id) ?? this.options.getDocument(item)
     this.documents.set(id, document)
     document.set(item)
     return document
