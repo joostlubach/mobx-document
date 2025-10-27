@@ -14,7 +14,7 @@
     "build:tsc:esm": "tsc -p tsconfig.prod.json --module esnext --outDir dist/esm --declarationDir dist/types",
     "build:tsc:cjs": "tsc -p tsconfig.prod.json --module commonjs --outDir dist/cjs --declaration false --declarationMap false",
     "clean": "rimraf dist",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint",
     "check": "tsc -p . --noEmit",
     "test": "NODE_ENV=test jest"
   },
@@ -28,6 +28,10 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.20",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "js-yaml": "^4.1.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
   }
