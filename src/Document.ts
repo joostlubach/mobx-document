@@ -37,15 +37,15 @@ export default abstract class Document<
   // #region Data
 
   @observable.ref
-  public data: T | null = null
+  public accessor data: T | null = null
 
   @observable.ref
-  public meta: M | null = null
+  public accessor meta: M | null = null
 
   protected defaultParams: P
 
   @observable.ref
-  public params: P
+  public accessor params: P
 
   @computed
   public get empty() {
@@ -135,7 +135,7 @@ export default abstract class Document<
   // #region Fetch
 
   @observable
-  public fetchStatus: FetchStatus = 'idle'
+  public accessor fetchStatus: FetchStatus = 'idle'
 
   private fetchPromise: Promise<unknown> | null = null
 

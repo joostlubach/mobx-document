@@ -11,7 +11,7 @@ export default class Database<D extends AnyDocument> {
   }
 
   @observable
-  private documents: Map<D['id'], D> = new Map()
+  private accessor documents: Map<D['id'], D> = new Map()
 
   // ------
   // Retrieval

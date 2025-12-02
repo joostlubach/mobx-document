@@ -24,7 +24,7 @@
     "ytil": "workspace:^"
   },
   "peerDependencies": {
-    "mobx": ">=6.0.0"
+    "mobx": ">=6.15"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.20",

@@ -54,7 +54,7 @@ export default abstract class Endpoint<
   protected defaultParams: Readonly<P>
 
   @observable.ref
-  protected _params: Readonly<P>
+  protected accessor _params: Readonly<P>
   public get params(): Readonly<P> {
     return this._params
   }
@@ -95,7 +95,7 @@ export default abstract class Endpoint<
   }
 
   @observable.ref
-  public ids: Array<D['id']> = []
+  public accessor ids: Array<D['id']> = []
 
   @computed
   public get documents() {
@@ -118,7 +118,7 @@ export default abstract class Endpoint<
   }
 
   @observable.shallow
-  public meta: M | null = null
+  public accessor meta: M | null = null
 
   @computed
   public get asFetch(): Fetch<DocumentData<D>[]> {
@@ -133,7 +133,7 @@ export default abstract class Endpoint<
   // Fetch
 
   @observable
-  public fetchStatus: FetchStatus = 'idle'
+  public accessor fetchStatus: FetchStatus = 'idle'
 
   private lastFetchPromise: Promise<void> | null = null
   private lastFetchParams:  object | null = null
