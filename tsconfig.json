@@ -19,7 +19,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
 
-    "lib": ["ESNext"],
+    "lib": ["ES2022"],
   },
   "include": [
     "src"

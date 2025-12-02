@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "npm run build:tsc:esm && npm run build:tsc:cjs",
-    "build:tsc:esm": "tsc -p tsconfig.prod.json --module esnext --outDir dist/esm --declarationDir dist/types",
+    "build:tsc:esm": "tsc -p tsconfig.prod.json --module es2022 --outDir dist/esm --declarationDir dist/types",
     "build:tsc:cjs": "tsc -p tsconfig.prod.json --module commonjs --outDir dist/cjs --declaration false --declarationMap false",
     "clean": "rimraf dist",
     "lint": "eslint",
