@@ -53,7 +53,7 @@ export default abstract class Endpoint<
   protected options:       EndpointOptions<P, D, M>
   protected defaultParams: Readonly<P>
 
-  @observable.ref
+  @observable
   protected accessor _params: Readonly<P>
   public get params(): Readonly<P> {
     return this._params
@@ -94,7 +94,7 @@ export default abstract class Endpoint<
     return objectEquals(params1, params2)
   }
 
-  @observable.ref
+  @observable
   public accessor ids: Array<D['id']> = []
 
   @computed
@@ -117,7 +117,7 @@ export default abstract class Endpoint<
     return this.data.length === 0
   }
 
-  @observable.shallow
+  @observable
   public accessor meta: M | null = null
 
   @computed
