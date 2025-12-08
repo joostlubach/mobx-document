@@ -173,27 +173,27 @@ export default abstract class Document<
 
   @action
   private onFetchSuccess = (promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {
-    if (promise !== this.fetchPromise) { return }
+      if (promise !== this.fetchPromise) { return }
 
-    this.fetchPromise = null
-    if (response == null) { return }
+      this.fetchPromise = null
+      if (response == null) { return }
 
-    if (!isErrorResponse(response)) {
-      this.fetchStatus = 'done'
-      this.set(response.data, response.meta)
-    } else {
-      this.fetchStatus = response.error
+      if (!isErrorResponse(response)) {
+        this.fetchStatus = 'done'
+        this.set(response.data, response.meta)
+      } else {
+        this.fetchStatus = response.error
+      }
     }
-  }
 
   @action
   private onFetchError = (promise: Promise<unknown>, error: Error) => {
-    if (promise !== this.fetchPromise) { return }
+      if (promise !== this.fetchPromise) { return }
 
-    this.fetchPromise = null
-    this.fetchStatus = error
-    logger.error('Error while fetching document', error)
-  }
+      this.fetchPromise = null
+      this.fetchStatus = error
+      logger.error('Error while fetching document', error)
+    }
 
   // #endregion
 

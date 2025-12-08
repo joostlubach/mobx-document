@@ -179,34 +179,34 @@ export default abstract class Endpoint<
 
   @action
   private onFetchSuccess = (promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
-    if (promise !== this.lastFetchPromise) { return }
+      if (promise !== this.lastFetchPromise) { return }
 
-    this.lastFetchPromise = null
-    this.lastFetchParams = null
+      this.lastFetchPromise = null
+      this.lastFetchParams = null
 
-    if (response == null) {
-      this.fetchStatus = 'done'
-    } else if (isErrorResponse(response)) {
-      this.fetchStatus = response.error
-      this.meta = this.options.meta ?? null
-    } else if (options.append) {
-      this.fetchStatus = 'done'
-      this.append(response.data, response.meta)
-    } else {
-      this.fetchStatus = 'done'
-      this.replace(response.data, response.meta)
+      if (response == null) {
+        this.fetchStatus = 'done'
+      } else if (isErrorResponse(response)) {
+        this.fetchStatus = response.error
+        this.meta = this.options.meta ?? null
+      } else if (options.append) {
+        this.fetchStatus = 'done'
+        this.append(response.data, response.meta)
+      } else {
+        this.fetchStatus = 'done'
+        this.replace(response.data, response.meta)
+      }
     }
-  }
 
   @action
   private onFetchError = (promise: Promise<unknown>, error: Error) => {
-    if (promise !== this.lastFetchPromise) { return }
+      if (promise !== this.lastFetchPromise) { return }
 
-    this.lastFetchPromise = null
-    this.lastFetchParams = null
-    this.fetchStatus = error
-    logger.error(`Error while fetching collection: ${error.message}`, error)
-  }
+      this.lastFetchPromise = null
+      this.lastFetchParams = null
+      this.fetchStatus = error
+      logger.error(`Error while fetching collection: ${error.message}`, error)
+    }
 
   // ------
   // Updates
