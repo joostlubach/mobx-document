@@ -107,6 +107,11 @@ export default abstract class Endpoint<
     return this.database.list(this.ids)
   }
 
+  public get(id: D['id']): DocumentData<D> | null {
+    if (!this.ids.includes(id)) { return null }
+    return this.database.get(id)
+  }
+
   @computed
   public get count(): number {
     return this.ids.length
