@@ -36,10 +36,10 @@ export default abstract class Document<
 
   // #region Data
 
-  @observable
+  @observable.shallow
   public accessor data: T | null = null
 
-  @observable
+  @observable.shallow
   public accessor meta: M | null = null
 
   protected defaultParams: P
