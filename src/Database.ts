@@ -46,6 +46,17 @@ export default class Database<D extends AnyDocument> {
     return sparse([...this.documents.values()].map(doc => doc.data as DocumentData<D> | null))
   }
 
+  public find(predicate: (data: DocumentData<D>, document: D) => boolean): DocumentData<D> | null {
+    for (const document of this.documents.values()) {
+      if (document.data == null) { continue }
+      if (predicate(document.data as DocumentData<D>, document)) {
+        return document.data as DocumentData<D>
+      }
+    }
+
+    return null
+  }
+
   public listDocuments(ids: D['id'][]): D[] {
     return ids
       .map(id => this.documents.get(id))
