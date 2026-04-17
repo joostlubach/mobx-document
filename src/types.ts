@@ -1,5 +1,4 @@
 import { isPlainObject, UnknownObject } from 'ytil'
-
 import Document from './Document'
 import Endpoint from './Endpoint'
 
@@ -25,6 +24,7 @@ export interface EndpointOptions<P, D extends AnyDocument, M = unknown> {
 }
 
 export interface CollectionFetchOptions {
+  ids?: Array<string | number>
   append?: boolean
 }
 
