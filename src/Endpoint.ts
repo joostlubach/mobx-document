@@ -139,6 +139,7 @@ export default abstract class Endpoint<
 
   @observable
   public accessor fetchStatus: FetchStatus = 'idle'
+  public accessor appending: boolean = false
 
   private lastFetchPromise: Promise<void> | null = null
   private lastFetchParams:  object | null = null
@@ -162,6 +163,7 @@ export default abstract class Endpoint<
     }
 
     this.fetchStatus = 'fetching'
+    this.appending = options.append ?? false
 
     const promise: Promise<void> = this
       .performFetch(options)
@@ -169,6 +171,9 @@ export default abstract class Endpoint<
         response => this.onFetchSuccess(promise, response, options),
         response => this.onFetchError(promise, response),
       )
+      .finally(action(() => {
+        this.appending = false
+      }))
 
     this.lastFetchParams = {...params}
     this.lastFetchPromise = promise
