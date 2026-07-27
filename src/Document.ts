@@ -1,11 +1,13 @@
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { EmptyObject, objectEquals } from 'ytil'
+import Database from './Database'
 import {
   DocumentFetchResponse,
   DocumentOptions,
   FetchOptions,
   FetchStatus,
+  IdOf,
   isErrorResponse,
   OptimisticUpdateSpec,
   SetParamsOptions,
@@ -15,15 +17,18 @@ const logger = new Logger('mobx-document')
 
 export default abstract class Document<
   T,
-  ID extends string | number,
+  Id = IdOf<T>,
   P extends object = EmptyObject,
   M extends object = EmptyObject
 > {
 
   constructor(
-    public readonly id: ID,
+    public readonly id: Id,
+    database: Database<T, M, Id> | null = null,
     protected readonly options: DocumentOptions<T, M, P> = {},
   ) {
+    this.database = database ?? new Database()
+
     makeObservable(this)
 
     this.defaultParams = {...this.options.defaultParams as P}
@@ -34,13 +39,19 @@ export default abstract class Document<
     }
   }
 
+  public database: Database<T, M, Id>
+
   // #region Data
 
-  @observable.ref
-  public accessor data: T | null = null
+  @computed
+  public get data(): T | null {
+    return this.database.get(this.id)
+  }
 
-  @observable.ref
-  public accessor meta: M | null = null
+  @computed
+  public get meta(): M | null {
+    return (this.database.getMeta(this.id) ?? null) as M | null
+  }
 
   protected defaultParams: P
 
@@ -53,51 +64,12 @@ export default abstract class Document<
   }
 
   @action
-  public clear() {
-    this.data = null
-    this.meta = null
-    this.fetchStatus = 'idle'
-
-    this.onDidChange()
-  }
-
-  @action
-  public set(data: T | null, meta?: M | null, replaceMeta: boolean = false) {
-    this.data = data
-
-    if (meta !== undefined) {
-      if (this.meta != null && !replaceMeta) {
-        this.meta = {...this.meta, ...meta}
-      } else {
-        this.meta = meta
-      }
-    }
+  public set(data: T | null, meta?: M) {
+    this.database.store(data as T, meta)
 
     if (this.data != null) {
       this.fetchStatus = 'done'
     }
-
-    this.onDidChange()
-  }
-
-  @action
-  public setMeta(meta: M) {
-    this.meta = meta
-    this.onDidChange()
-  }
-
-  @action
-  public mergeMeta(meta: Partial<M>) {
-    if (this.meta == null) { return }
-
-    this.meta = {...this.meta, meta}
-    this.onDidChange()
-  }
-
-  @action
-  public updateMeta(meta: Partial<M>) {
-    if (this.meta == null) { return }
-    this.meta = {...this.meta, ...meta}
 
     this.onDidChange()
   }

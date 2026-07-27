@@ -1,97 +1,87 @@
-import { action, computed, makeObservable, observable } from 'mobx'
-import { sparse } from 'ytil'
-import { AnyDocument, DatabaseOptions, DocumentData } from './types'
+import { action, makeObservable, observable } from 'mobx'
+import { isObject, sparse } from 'ytil'
+import { DatabaseOptions, IdOf } from './types'
 
-export default class Database<D extends AnyDocument> {
+export default class Database<T, M = unknown, Id = IdOf<T>> {
 
   constructor(
-    private readonly options: DatabaseOptions<D>,
+    private readonly options: DatabaseOptions<T, Id> = {},
   ) {
     makeObservable(this)
   }
 
   @observable
-  private accessor documents: Map<D['id'], D> = new Map()
+  private accessor data: Map<Id, T> = new Map()
+  
+  @observable
+  private accessor meta: Map<Id, M> = new Map()
 
   // ------
   // Retrieval
 
-  @computed
-  public get allDocuments(): D[] {
-    return Array.from(this.documents.values())
+  public get(id: Id): T | null {
+    return this.data.get(id) ?? null
   }
 
-  @computed
-  public get nonEmptyDocuments(): D[] {
-    return this.allDocuments.filter(doc => doc.data != null)
+  public getMeta(id: Id): M | null {
+    return this.meta.get(id) ?? null
   }
 
-  public document(id: D['id']): D {
-    const existing = this.documents.get(id)
-    if (existing != null) { return existing }
-
-    const newDocument = this.options.emptyDocument(id)
-    this.documents.set(id, newDocument)
-    return newDocument
+  public all(): T[] {
+    return Array.from(this.data.values())
   }
 
-  public get(id: D['id']): DocumentData<D> | null {
-    const document = this.document(id)
-    if (document == null) { return null }
-
-    return document.data as DocumentData<D>
-  }
-
-  public all(): DocumentData<D>[] {
-    return sparse([...this.documents.values()].map(doc => doc.data as DocumentData<D> | null))
-  }
-
-  public find(predicate: (data: DocumentData<D>, document: D) => boolean): DocumentData<D> | null {
-    for (const document of this.documents.values()) {
-      if (document.data == null) { continue }
-      if (predicate(document.data as DocumentData<D>, document)) {
-        return document.data as DocumentData<D>
+  public find(predicate: (data: T) => boolean): T | null {
+    for (const item of this.data.values()) {
+      if (predicate(item)) {
+        return item
       }
     }
 
     return null
   }
 
-  public listDocuments(ids: D['id'][]): D[] {
-    return ids
-      .map(id => this.documents.get(id))
-      .filter(doc => {
-        if (doc == null) { return false }
-        if (doc.data == null) { return false }
-        return true
-      }) as D[]
+  public list(ids: Id[]): T[] {
+    const data = ids.map(id => this.data.get(id))
+    return sparse(data)
   }
 
-  public list(ids: D['id'][]): DocumentData<D>[] {
-    const documents = this.listDocuments(ids)
-    return documents.map(doc => doc.data as DocumentData<D>)
+  public id(item: T): Id {
+    if (this.options.id != null) {
+      return this.options.id(item)
+    } else if (isObject(item) && 'id' in item) {
+      return item.id as Id
+    }
+    throw new Error('Cannot determine id of item')
   }
 
   // ------
   // Updates
 
   @action
-  public store(item: DocumentData<D>, id?: D['id']): D {
-    id ??= this.options.getID(item)
-    const document = this.document(id) ?? this.options.getDocument(item)
-    this.documents.set(id, document)
-    document.set(item)
-    return document
+  public store(item: T, meta?: M) {
+    const id = this.id(item)
+    this.data.set(id, item)
+    if (meta != null) {
+      this.meta.set(id, meta)
+    }
+    return item
   }
 
+  public storeMeta(id: Id, meta: M) {
+    this.meta.set(id, meta)
+  }
+  
   @action
-  public delete(id: D['id']) {
-    this.documents.delete(id)
+  public delete(id: Id) {
+    this.data.delete(id)
+    this.meta.delete(id)
   }
 
   @action
   public clear() {
-    this.documents.clear()
+    this.data.clear()
+    this.meta.clear()
   }
 
 }

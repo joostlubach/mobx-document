@@ -1,17 +1,16 @@
 import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
+import { EmptyObject, objectEquals } from 'ytil'
 import Database from './Database'
 import { Fetch } from './Fetch'
 import {
-  AnyDocument,
   AppendOptions,
   CollectionFetchOptions,
   CollectionFetchResponse,
-  DocumentData,
   EndpointOptions,
   FetchStatus,
+  IdOf,
   isErrorResponse,
   SetParamsOptions,
 } from './types'
@@ -19,15 +18,17 @@ import {
 const logger = new Logger('mobx-document')
 
 export default abstract class Endpoint<
-  D extends AnyDocument,
+  T,
+  Id = IdOf<T>,
   P extends object = EmptyObject,
   M extends object = EmptyObject
 > {
 
   constructor(
-    public readonly database: Database<D>,
-    ...args: {} extends P ? [options?: EndpointOptions<P, D, M>] : [options: EndpointOptions<P, D, M> & {initialParams: P}]
+    database: Database<T, M, Id> | null = null,
+    ...args: {} extends P ? [options?: EndpointOptions<P, T, M>] : [options: EndpointOptions<P, T, M> & {initialParams: P}]
   ) {
+    this.database = database ?? new Database()
     this.options = args[0] ?? {}
 
     this.defaultParams = {...this.options.defaultParams as P}
@@ -50,7 +51,9 @@ export default abstract class Endpoint<
     }
   }
 
-  protected options:       EndpointOptions<P, D, M>
+  public readonly database: Database<T, M, Id>
+
+  protected options:       EndpointOptions<P, T, M>
   protected defaultParams: Readonly<P>
 
   @observable
@@ -95,19 +98,14 @@ export default abstract class Endpoint<
   }
 
   @observable
-  public accessor ids: Array<D['id']> = []
-
-  @computed
-  public get documents() {
-    return this.database.listDocuments(this.ids)
-  }
+  public accessor ids: Array<Id> = []
 
   @computed
   public get data() {
     return this.database.list(this.ids)
   }
 
-  public get(id: D['id']): DocumentData<D> | null {
+  public get(id: Id): T | null {
     if (!this.ids.includes(id)) { return null }
     return this.database.get(id)
   }
@@ -126,7 +124,7 @@ export default abstract class Endpoint<
   public accessor meta: M | null = null
 
   @computed
-  public get asFetch(): Fetch<DocumentData<D>[]> {
+  public get asFetch(): Fetch<T[]> {
     if (this.fetchStatus !== 'done') {
       return {status: this.fetchStatus}
     } else {
@@ -185,10 +183,10 @@ export default abstract class Endpoint<
     return this.mergeParams(this.defaultParams, this._params, 'defaults')
   }
 
-  protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<DocumentData<D>, M> | null>
+  protected abstract performFetch(options: CollectionFetchOptions): Promise<CollectionFetchResponse<T, M> | null>
 
   @action
-  private onFetchSuccess = (promise: Promise<unknown>, response: CollectionFetchResponse<DocumentData<D>, M> | null, options: CollectionFetchOptions) => {
+  private onFetchSuccess = (promise: Promise<unknown>, response: CollectionFetchResponse<T, M> | null, options: CollectionFetchOptions) => {
       if (promise !== this.lastFetchPromise) { return }
 
       this.lastFetchPromise = null
@@ -201,10 +199,18 @@ export default abstract class Endpoint<
         this.meta = this.options.meta ?? null
       } else if (options.append) {
         this.fetchStatus = 'done'
-        this.append(response.data, response.meta)
+
+        const data = ('data' in response.data ? response.data.data : response.data) as T[]
+        const meta = ('meta' in response.data ? response.data.meta : undefined) as M | undefined
+        this.append(...data)
+        this.replaceMeta(meta)
       } else {
         this.fetchStatus = 'done'
-        this.replace(response.data, response.meta)
+
+        const data = ('data' in response.data ? response.data.data : response.data) as T[]
+        const meta = ('meta' in response.data ? response.data.meta : undefined) as M | undefined
+        this.replace(data)
+        this.replaceMeta(meta)
       }
     }
 
@@ -222,14 +228,15 @@ export default abstract class Endpoint<
   // Updates
 
   @action
-  public replace(data: Array<DocumentData<D> | {data: DocumentData<D>, meta?: Record<string, any>}>, meta?: M) {
+  public replace(data: T[]) {
     this.ids = []
-    this.append(data, meta)
+    this.append(...data)
     this.fetchStatus = 'done'
   }
 
   @action
-  public replaceMeta(meta: M) {
+  public replaceMeta(meta: M | undefined) {
+    if (meta == null) { return }
     this.meta = meta
   }
 
@@ -240,57 +247,50 @@ export default abstract class Endpoint<
   }
 
   @action
-  public append(data: Array<DocumentData<D> | {data: DocumentData<D>, meta?: Record<string, any>}>, meta?: M) {
+  public append(...data: T[]) {
     for (const item of data) {
-      if (isPlainObject(item) && 'data' in item) {
-        this.add(item.data as DocumentData<D>, item.meta as M)
-      } else {
-        this.add(item)
-      }
-    }
-
-    if (meta !== undefined) {
-      this.meta = meta
+      this.add(item)
     }
   }
 
   @action
-  public add(item: DocumentData<D>, meta?: D['meta'], replaceMeta: boolean = false) {
-    const document = this.store(item)
-    if (meta != null) {
-      if (document.meta != null && !replaceMeta) {
-        document.mergeMeta(meta)
-      } else {
-        document.setMeta(meta)
-      }
+  public add(...data: T[]) {
+    for (const item of data) {
+      this.database.store(item)
     }
-    this.ids = [...this.ids, document.id]
+
+    const ids = data.map(item => this.database.id(item))
+    this.ids = [...this.ids, ...ids]
   }
 
   @action
-  public insert(item: DocumentData<D>, index: number) {
-    const document = this.store(item)
+  public insert(data: T[], index: number) {
+    for (const item of data) {
+      this.database.store(item)
+    }
+
+    const ids = data.map(item => this.database.id(item))
     this.ids = [
       ...this.ids.slice(0, index),
-      document.id,
+      ...ids,
       ...this.ids.slice(index),
     ]
   }
 
   @action
-  public appendIDs(ids: D['id'][], options: AppendOptions = {}) {
+  public appendIDs(ids: Id[], options: AppendOptions = {}) {
     for (const id of ids) {
       this.appendID(id, options)
     }
   }
 
   @action
-  public replaceIDs(ids: D['id'][]) {
+  public replaceIDs(ids: Id[]) {
     this.ids = ids
   }
 
   @action
-  public appendID(id: D['id'], options: AppendOptions = {}) {
+  public appendID(id: Id, options: AppendOptions = {}) {
     const {
       ignoreIfExists = true,
     } = options
@@ -300,7 +300,7 @@ export default abstract class Endpoint<
   }
 
   @action
-  public remove(ids: Array<D['id']>, deleteFromDB: boolean = true) {
+  public remove(ids: Id[], deleteFromDB: boolean = true) {
     this.ids = this.ids.filter(id => !ids.includes(id))
 
     if (deleteFromDB) {
@@ -318,7 +318,7 @@ export default abstract class Endpoint<
   }
 
   @action
-  protected store(item: DocumentData<D>): D {
+  protected store(item: T) {
     return this.database.store(item)
   }
 

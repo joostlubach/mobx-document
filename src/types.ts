@@ -5,21 +5,21 @@ import Endpoint from './Endpoint'
 // ------
 // Database
 
-export interface DatabaseOptions<D extends AnyDocument> {
-  getID:         (item: DocumentData<D>) => D['id']
-  getDocument:   (item: DocumentData<D>) => D
-  emptyDocument: (id: D['id']) => D
+export interface DatabaseOptions<T, Id> {
+  id?: (item: T) => Id
 }
+
+export type IdOf<T> = T extends {id: infer Id extends string | number} ? Id : (string | number)
 
 // ------
 // Endpoint
 
 export type AnyEndpoint = Endpoint<AnyDocument, any, any>
 
-export interface EndpointOptions<P, D extends AnyDocument, M = unknown> {
+export interface EndpointOptions<P, T, M = unknown> {
   defaultParams?: P
   initialParams?: P
-  data?:          Array<DocumentData<D>>
+  data?:          T[]
   meta?:          M | null
 }
 
@@ -57,21 +57,22 @@ export interface SetParamsOptions<P> {
 // ------
 // Document
 
-export type AnyDocument = Document<any, any, any, any>
+export type AnyDocument = Document<any, any, any>
 
 export interface DocumentOptions<T, M, P> {
-  initialData?: T | null
-  initialMeta?: M | null
+  initialData?: T
+  initialMeta?: M
 
   defaultParams?: P
   initialParams?: P
 }
 
-export type DocumentData<D extends Document<any, any, any, any>> =
-  D extends Document<infer T, any, any, any> ? T : never
+export type DocumentData<D extends Document<any, any, any>> =
+  D extends Document<infer T, any, any> ? T : never
 
 export interface FetchOptions {
   force?: boolean
+  endpoint?: string
 }
 
 // ------
