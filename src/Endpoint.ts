@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject, objectEquals } from 'ytil'
+import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
 import { Database } from './Database'
 import { Fetch } from './Fetch'
 import {
@@ -202,7 +202,7 @@ export abstract class Endpoint<
 
         const data = ('data' in response.data ? response.data.data : response.data) as T[]
         const meta = ('meta' in response.data ? response.data.meta : undefined) as M | undefined
-        this.append(...data)
+        this.append(data)
         this.replaceMeta(meta)
       } else {
         this.fetchStatus = 'done'
@@ -230,7 +230,7 @@ export abstract class Endpoint<
   @action
   public replace(data: T[]) {
     this.ids = []
-    this.append(...data)
+    this.append(data)
     this.fetchStatus = 'done'
   }
 
@@ -247,34 +247,32 @@ export abstract class Endpoint<
   }
 
   @action
-  public append(...data: T[]) {
-    for (const item of data) {
-      this.add(item)
-    }
-  }
-
-  @action
-  public add(...data: T[]) {
-    for (const item of data) {
-      this.database.store(item)
-    }
-
-    const ids = data.map(item => this.database.id(item))
+  public append(data: T[]) {
+    const ids = this.store(data)
     this.ids = [...this.ids, ...ids]
   }
 
   @action
   public insert(data: T[], index: number) {
-    for (const item of data) {
-      this.database.store(item)
-    }
-
-    const ids = data.map(item => this.database.id(item))
+    const ids = this.store(data)
     this.ids = [
       ...this.ids.slice(0, index),
       ...ids,
       ...this.ids.slice(index),
     ]
+  }
+
+  private store(data: T[]) {
+    const ids: Id[] = []
+    for (const item of data) {
+      if (isPlainObject(item) && 'data' in item) {
+        const meta = 'meta' in item ? item.meta : undefined
+        ids.push(this.database.store(item.data, meta))
+      } else {
+        ids.push(this.database.store(item))
+      }
+    }
+    return ids
   }
 
   @action
@@ -315,11 +313,6 @@ export abstract class Endpoint<
     this.ids = []
     this.meta = this.options.meta ?? null
     this.fetchStatus = 'idle'
-  }
-
-  @action
-  protected store(item: T) {
-    return this.database.store(item)
   }
 
 }

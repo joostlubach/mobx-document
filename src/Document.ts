@@ -125,7 +125,7 @@ export abstract class Document<
 
     this.fetchStatus = 'fetching'
 
-    const promise = this.performFetch()
+    const promise = this.performFetch(options)
     this.fetchPromise = promise
 
     return promise.then(
@@ -141,7 +141,7 @@ export abstract class Document<
     }
   }
 
-  protected abstract performFetch(): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
+  protected abstract performFetch(options: FetchOptions): Promise<DocumentFetchResponse<T | null, M> | null | undefined>
 
   @action
   private onFetchSuccess = (promise: Promise<unknown>, response: DocumentFetchResponse<T | null, M> | null | undefined) => {

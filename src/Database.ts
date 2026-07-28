@@ -65,7 +65,7 @@ export class Database<T, M = unknown, Id = IdOf<T>> {
     if (meta != null) {
       this.meta.set(id, meta)
     }
-    return item
+    return id
   }
 
   @action
