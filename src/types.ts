@@ -1,6 +1,6 @@
 import { isPlainObject, UnknownObject } from 'ytil'
-import Document from './Document'
-import Endpoint from './Endpoint'
+import { Document } from './Document'
+import { Endpoint } from './Endpoint'
 
 // ------
 // Database

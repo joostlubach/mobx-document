@@ -1,13 +1,11 @@
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { EmptyObject, objectEquals } from 'ytil'
-import { Database } from './Database'
 import {
   DocumentFetchResponse,
   DocumentOptions,
   FetchOptions,
   FetchStatus,
-  IdOf,
   isErrorResponse,
   OptimisticUpdateSpec,
   SetParamsOptions,
@@ -15,20 +13,15 @@ import {
 
 const logger = new Logger('mobx-document')
 
-export abstract class Document<
+export abstract class SingletonDocument<
   T,
-  Id = IdOf<T>,
   P extends object = EmptyObject,
   M extends object = EmptyObject
 > {
 
   constructor(
-    public readonly id: Id,
-    database: Database<T, M, Id> | null = null,
     protected readonly options: DocumentOptions<T, M, P> = {},
   ) {
-    this.database = database ?? new Database()
-
     makeObservable(this)
 
     this.defaultParams = {...this.options.defaultParams as P}
@@ -39,19 +32,15 @@ export abstract class Document<
     }
   }
 
-  public database: Database<T, M, Id>
-
   // #region Data
 
-  @computed
-  public get data(): T | null {
-    return this.database.get(this.id)
-  }
+  @observable
+  private accessor _data: T | null = null
+  public get data() { return this._data }
 
-  @computed
-  public get meta(): M | null {
-    return (this.database.getMeta(this.id) ?? null) as M | null
-  }
+  @observable
+  private accessor _meta: M | null = null
+  public get meta() { return this._meta }
 
   protected defaultParams: P
 
@@ -65,7 +54,10 @@ export abstract class Document<
 
   @action
   public set(data: T | null, meta?: M) {
-    this.database.store(data as T, meta)
+    this._data = data
+    if (meta != null) {
+      this._meta = meta
+    }
 
     if (this.data != null) {
       this.fetchStatus = 'done'

@@ -1,8 +1,7 @@
-export { default as Database } from './Database'
-export { default as Document } from './Document'
-export { default as Endpoint } from './Endpoint'
-export { default as FetchError } from './FetchError'
-
+export * from './Database'
+export * from './Document'
+export * from './Endpoint'
 export * from './Fetch'
+export * from './SingletonDocument'
 export * from './types'
 export * from './util'

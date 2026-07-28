@@ -2,7 +2,7 @@ import { action, makeObservable, observable } from 'mobx'
 import { isObject, sparse } from 'ytil'
 import { DatabaseOptions, IdOf } from './types'
 
-export default class Database<T, M = unknown, Id = IdOf<T>> {
+export class Database<T, M = unknown, Id = IdOf<T>> {
 
   constructor(
     private readonly options: DatabaseOptions<T, Id> = {},
@@ -68,6 +68,7 @@ export default class Database<T, M = unknown, Id = IdOf<T>> {
     return item
   }
 
+  @action
   public storeMeta(id: Id, meta: M) {
     this.meta.set(id, meta)
   }

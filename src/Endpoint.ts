@@ -2,7 +2,7 @@ import { isFunction } from 'lodash'
 import Logger from 'logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { EmptyObject, objectEquals } from 'ytil'
-import Database from './Database'
+import { Database } from './Database'
 import { Fetch } from './Fetch'
 import {
   AppendOptions,
@@ -17,7 +17,7 @@ import {
 
 const logger = new Logger('mobx-document')
 
-export default abstract class Endpoint<
+export abstract class Endpoint<
   T,
   Id = IdOf<T>,
   P extends object = EmptyObject,
