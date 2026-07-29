@@ -111,9 +111,9 @@ export abstract class Document<
 
   private fetchPromise: Promise<unknown> | null = null
 
-  public async fetchIfNeeded(params?: P): Promise<void> {
+  public async fetchIfNeeded(options: FetchOptions = {}): Promise<void> {
     if (this.fetchStatus !== 'done' && this.fetchStatus !== 'fetching') {
-      await this.fetch(params)
+      await this.fetch(options)
     }
   }
 
