@@ -171,6 +171,9 @@ export abstract class Endpoint<
       )
       .finally(action(() => {
         this.appending = false
+        if (this.fetchStatus === 'fetching') {
+          this.fetchStatus = 'done'
+        }
       }))
 
     this.lastFetchParams = {...params}

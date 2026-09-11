@@ -123,7 +123,9 @@ export abstract class Document<
       return this.fetchPromise.then(() => undefined)
     }
 
-    this.fetchStatus = 'fetching'
+    runInAction(() => {
+      this.fetchStatus = 'fetching'
+    })
 
     const promise = this.performFetch(options)
     this.fetchPromise = promise
@@ -131,7 +133,11 @@ export abstract class Document<
     return promise.then(
       this.onFetchSuccess.bind(this, promise),
       this.onFetchError.bind(this, promise),
-    )
+    ).finally(action(() => {
+      if (this.fetchStatus === 'fetching') {
+        this.fetchStatus = 'done'
+      }
+    }))
   }
 
   public get mergedParams(): P {
