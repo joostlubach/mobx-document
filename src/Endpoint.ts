@@ -85,7 +85,8 @@ export abstract class Endpoint<
     const shouldClear = isFunction(clear) ? clear(prevParams, this._params) : clear
     if (shouldClear) { this.clear() }
     
-    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && (this.fetchStatus === 'done' || this.fetchStatus instanceof Error))
+    // A fetch in flight is superseded: its (stale) result is discarded in favour of this one.
+    const shouldFetch = fetch === 'always' || (fetch === 'refetch' && this.fetchStatus !== 'idle')
     if (shouldFetch) { this.fetch() }
   }
 
@@ -170,6 +171,8 @@ export abstract class Endpoint<
         response => this.onFetchError(promise, response),
       )
       .finally(action(() => {
+        if (this.lastFetchPromise != null && this.lastFetchPromise !== promise) { return }
+
         this.appending = false
         if (this.fetchStatus === 'fetching') {
           this.fetchStatus = 'done'
