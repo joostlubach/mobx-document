@@ -1,6 +1,6 @@
-import Logger from 'logger'
+import Logger from '@mosdev/logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject, objectEquals } from 'ytil'
+import { EmptyObject, objectEquals } from '@mosdev/ytil'
 import { Database } from './Database'
 import {
   DocumentFetchResponse,

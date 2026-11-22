@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash'
-import Logger from 'logger'
+import Logger from '@mosdev/logger'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import { EmptyObject, isPlainObject, objectEquals } from 'ytil'
+import { EmptyObject, isPlainObject, objectEquals } from '@mosdev/ytil'
 import { Database } from './Database'
 import { Fetch } from './Fetch'
 import {

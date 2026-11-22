@@ -1,5 +1,5 @@
 import { action, makeObservable, observable } from 'mobx'
-import { isObject, sparse } from 'ytil'
+import { isObject, sparse } from '@mosdev/ytil'
 import { DatabaseOptions, IdOf } from './types'
 
 export class Database<T, M = unknown, Id = IdOf<T>> {

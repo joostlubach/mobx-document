@@ -1,5 +1,5 @@
 import { every, some } from 'lodash'
-import { isPlainObject, UnknownObject } from 'ytil'
+import { isPlainObject, UnknownObject } from '@mosdev/ytil'
 import { Document } from './Document'
 import { Endpoint } from './Endpoint'
 

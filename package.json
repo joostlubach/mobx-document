@@ -1,5 +1,5 @@
 {
-  "name": "mobx-document",
+  "name": "@mosdev/mobx-document",
   "version": "0.0.1",
   "description": "MobX-based self fetching document",
   "private": true,
@@ -20,8 +20,8 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "logger": "workspace:^",
-    "ytil": "workspace:^"
+    "@mosdev/logger": "workspace:^",
+    "@mosdev/ytil": "workspace:^"
   },
   "peerDependencies": {
     "mobx": ">=6.15"
